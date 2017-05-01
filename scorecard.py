@@ -51,9 +51,9 @@ def get_scorecard_sift(image, template):
 
 		h_2, w_2 = img2.shape
 		adjusted_image = cv2.warpPerspective(image, M, (w_2, h_2))
-		cv2.imshow("Warped", adjusted_image)
-		cv2.waitKey(0)
-		cv2.destroyAllWindows()
+		# cv2.imshow("Warped", adjusted_image)
+		# cv2.waitKey(0)
+		# cv2.destroyAllWindows()
 
 		return adjusted_image
 	else:
@@ -90,9 +90,9 @@ def get_id_from_scorecard(image):
 		max_x = 90 + 54 * column
 		digit = bw[min_y:max_y, min_x:max_x]
 		digits.append(digit)
-		cv2.imshow("digit", digit)
-		cv2.waitKey(0)
-		cv2.destroyAllWindows()
+		# cv2.imshow("digit", digit)
+		# cv2.waitKey(0)
+		# cv2.destroyAllWindows()
 	return digits
 
 
@@ -112,9 +112,9 @@ def get_row_of_digits_from_scorecard(image, row_num):
 		max_x = 90 + 54 * column
 		digit = bw[min_y:max_y, min_x:max_x]
 		digits.append(digit)
-		cv2.imshow("digit", digit)
-		cv2.waitKey(0)
-		cv2.destroyAllWindows()
+		# cv2.imshow("digit", digit)
+		# cv2.waitKey(0)
+		# cv2.destroyAllWindows()
 	return digits
 
 
