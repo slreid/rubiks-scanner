@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 from keras import backend as K
 from keras.models import load_model
+from rubiks_database import getWinners, addInfoToDatabase
 
 
 def get_scorecard_sift(image, template):
@@ -70,12 +71,29 @@ def predict_digit(image):
 	else:
 		image = image.reshape(img_rows, img_cols, 1)
 
-	model = load_model('CNN\\new_model.h5')
+	model = load_model('CNN\\samantha.h5')
 
 	prediction = model.predict(np.asarray([image]))[0]
 	which_digit = np.argmax(prediction)
 	confidence = np.max(prediction)
 	return which_digit, confidence
+
+
+def get_id_from_scorecard(image):
+	bw = image < skimage.filters.threshold_local(image, 101)
+	bw = bw.astype("float32")
+	digits = []
+	for column in range(0, 3):
+		min_y = 134
+		max_y = 177
+		min_x = 43 + 54 * column
+		max_x = 90 + 54 * column
+		digit = bw[min_y:max_y, min_x:max_x]
+		digits.append(digit)
+		cv2.imshow("digit", digit)
+		cv2.waitKey(0)
+		cv2.destroyAllWindows()
+	return digits
 
 
 def get_row_of_digits_from_scorecard(image, row_num):
@@ -88,10 +106,10 @@ def get_row_of_digits_from_scorecard(image, row_num):
 	# cv2.destroyAllWindows()
 	digits = []
 	for column in range(0, 7):
-		min_y = 240 + 49 * adjusted_row_num
-		max_y = 280 + 49 * adjusted_row_num
-		min_x = 52 + 54 * column
-		max_x = 99 + 54 * column
+		min_y = 233 + 49 * adjusted_row_num
+		max_y = 273 + 49 * adjusted_row_num
+		min_x = 43 + 54 * column
+		max_x = 90 + 54 * column
 		digit = bw[min_y:max_y, min_x:max_x]
 		digits.append(digit)
 		cv2.imshow("digit", digit)
@@ -100,25 +118,42 @@ def get_row_of_digits_from_scorecard(image, row_num):
 	return digits
 
 
+def construct_id(digit_images):
+	digits = []
+	for digit in digit_images:
+		predicted_digit, confidence = predict_digit(digit)
+		print("Predicted:", predicted_digit, "with confidence", 100*confidence)
+		digits.append(predicted_digit)
+	comp_ip = str(digits[0]) + str(digits[1]) + str(digits[2])
+	return comp_ip
+
+
 def construct_time(digit_images):
 	digits = []
 	for digit in digit_images:
 		predicted_digit, confidence = predict_digit(digit)
 		print("Predicted:", predicted_digit, "with confidence", 100*confidence)
 		digits.append(predicted_digit)
-	time = str(digits[0]) + str(digits[1]) + ":" + str(digits[2]) + str(digits[3]) + "." + str(digits[4]) + str(
+	time = str(digits[0]) + str(digits[1]) + ":" + str(digits[2]) + str(digits[3]) + ":" + str(digits[4]) + str(
 		digits[5]) + str(digits[6])
 	return time
 
-
-image = cv2.imread('test_images\\unnamed.jpg', 0)
-template = cv2.imread('test_images\\template_inside.png', 0)
+all_times = []
+image = cv2.imread('test_images\\samanthas_shadow.jpg', 0)
+template = cv2.imread('test_images\\template_new.png', 0)
 adjusted_image = get_scorecard_sift(image, template)
 if adjusted_image is None:
 	print("Could not extract image")
 else:
+	id_digits = get_id_from_scorecard(adjusted_image)
+	comp_ip = construct_id(id_digits)
+	print("Competitor id:", comp_ip)
 	for row in range(1, 6):
 		row_of_digits = get_row_of_digits_from_scorecard(adjusted_image, row)
 		constructed_time = construct_time(row_of_digits)
+		all_times.append(constructed_time)
 		print(constructed_time)
+
+	addInfoToDatabase(comp_ip, all_times)
+	getWinners()
 
