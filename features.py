@@ -8,10 +8,10 @@ from skimage import img_as_ubyte
 
 MIN_MATCH_COUNT = 10
 
-img1 = cv2.imread('test_images\\close_center.jpg', 0)  # queryImage
-img2 = cv2.imread('test_images\\template_inside.png', 0)  # trainImage
+img1 = cv2.imread('test_images\\final_template_test.jpg', 0)  # queryImage
+img2 = cv2.imread('test_images\\template_new.png', 0)  # trainImage
 
-img1 = cv2.resize(img1, (int(img1.shape[1]/3), int(img1.shape[0]/3)))
+img1 = cv2.resize(img1, (int(img1.shape[1]), int(img1.shape[0])))
 
 # Initiate SIFT detector
 sift = cv2.xfeatures2d.SIFT_create()

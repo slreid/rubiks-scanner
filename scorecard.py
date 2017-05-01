@@ -8,6 +8,7 @@ import cv2
 from keras import backend as K
 from keras.models import load_model
 from rubiks_database import getWinners, addInfoToDatabase
+from skimage import img_as_ubyte
 
 
 def get_scorecard_sift(image, template):
@@ -110,9 +111,13 @@ def get_row_of_digits_from_scorecard(image, row_num):
 		max_y = 273 + 49 * adjusted_row_num
 		min_x = 43 + 54 * column
 		max_x = 90 + 54 * column
-		digit = bw[min_y:max_y, min_x:max_x]
+		digit_not_bw = image[min_y:max_y, min_x:max_x]
+		digit = img_as_ubyte(bw[min_y:max_y, min_x:max_x])
 		digits.append(digit)
-		# cv2.imshow("digit", digit)
+		cv2.imwrite('presentation_images\\digits\\' + str(row_num) + '_' + str(column + 1) + '.png', digit_not_bw)
+		cv2.imwrite('presentation_images\\digits\\bw_' + str(row_num) + '_' + str(column + 1) + '.png', digit)
+
+	# cv2.imshow("digit", digit)
 		# cv2.waitKey(0)
 		# cv2.destroyAllWindows()
 	return digits
