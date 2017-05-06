@@ -4,7 +4,6 @@ from matplotlib import pyplot as plt
 import skimage.transform
 import skimage.filters
 import numpy as np
-import cv2
 from keras import backend as K
 from keras.models import load_model
 from rubiks_database import getWinners, addInfoToDatabase
@@ -101,9 +100,7 @@ def get_row_of_digits_from_scorecard(image, row_num):
 	adjusted_row_num = row_num - 1
 	# print("shape", image.shape)
 	bw = image < skimage.filters.threshold_local(image, 101)
-	# plt.imshow(bw), plt.show()
-	cv2.imwrite('presentation_images\\bw_digits.png', img_as_ubyte(bw))
-
+	bw = bw.astype("float32")
 	# cv2.imshow("Black and White", bw)
 	# cv2.waitKey(0)
 	# cv2.destroyAllWindows()
@@ -114,60 +111,10 @@ def get_row_of_digits_from_scorecard(image, row_num):
 		min_x = 43 + 54 * column
 		max_x = 90 + 54 * column
 		digit_not_bw = image[min_y:max_y, min_x:max_x]
-		digit = bw[min_y:max_y, min_x:max_x]
-		# plt.imshow(digit_not_bw), plt.show()
-		# plt.imshow(digit), plt.show()
-
-		cnts = cv2.findContours(img_as_ubyte(digit.copy()), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-		cnts = cnts[1]
-		digitCnts = []
-		digit_draw = digit_not_bw.copy()
-		# print("Found", cnts, "number of contours")
-		cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:2]
-		# loop over the digit area candidates
-		added = False
-		for c in cnts:
-			# compute the bounding box of the contour
-			(x, y, w, h) = cv2.boundingRect(c)
-			# if the contour is sufficiently large, it must be a digit
-			if not ((40 >= h >= 12) and (40 >= w >= 3)):
-				continue
-			else:
-				added = True
-			digitCnts.append(c)
-			cv2.rectangle(digit_draw, (x, y), (x + w, y + h), (0, 255, 0), thickness=2)
-			# cv2.imshow("Show", digit_draw)
-			# cv2.waitKey()
-			# cv2.destroyAllWindows()
-			digit_crop = digit[y:y+h, x:x+w]
-			# plt.imshow(digit), plt.show()
-			# plt.imshow(digit_crop), plt.show()
-			resize_ratio = min(20./w, 20./h)
-			resize_width = int(resize_ratio * w)
-			resize_height = int(resize_ratio * h)
-			digit_resized = skimage.transform.resize(digit_crop, (resize_height, resize_width), mode='constant')
-			# plt.imshow(digit), plt.show()
-			# plt.imshow(digit_resized), plt.show()
-			digit_28_28 = np.zeros((28, 28), dtype=float)
-			lower_bound_y = int((28 - resize_height)/2)
-			upper_bound_y = int(resize_height + (28 - resize_height)/2)
-			lower_bound_x = int((28 - resize_width)/2)
-			upper_bound_x = int(resize_width + (28 - resize_width)/2)
-			digit_28_28[lower_bound_y:upper_bound_y, lower_bound_x:upper_bound_x] = digit_resized
-			# plt.imshow(digit, 'gray'), plt.show()
-			# plt.imshow(digit_28_28, 'gray'), plt.show()
-			cv2.imwrite('presentation_images\\digits\\' + str(row_num) + '_' + str(column + 1) + '.png',
-			            img_as_ubyte(digit_not_bw))
-			cv2.imwrite('presentation_images\\digits\\box_' + str(row_num) + '_' + str(column + 1) + '.png',
-						img_as_ubyte(digit_draw))
-			cv2.imwrite('presentation_images\\digits\\bw_' + str(row_num) + '_' + str(column + 1) + '.png',
-						img_as_ubyte(digit_crop))
-			cv2.imwrite('presentation_images\\digits\\bw_28_' + str(row_num) + '_' + str(column + 1) + '.png',
-						img_as_ubyte(digit_28_28))
-			digits.append(img_as_ubyte(digit_28_28))
-		if not added:
-			digits.append(None)
-
+		digit = img_as_ubyte(bw[min_y:max_y, min_x:max_x])
+		digits.append(digit)
+		cv2.imwrite('presentation_images\\digits\\' + str(row_num) + '_' + str(column + 1) + '.png', digit_not_bw)
+		cv2.imwrite('presentation_images\\digits\\bw_' + str(row_num) + '_' + str(column + 1) + '.png', digit)
 
 	# cv2.imshow("digit", digit)
 		# cv2.waitKey(0)
@@ -188,11 +135,7 @@ def construct_id(digit_images):
 def construct_time(digit_images):
 	digits = []
 	for digit in digit_images:
-		if digit is None:
-			predicted_digit = -1
-			confidence = 1.
-		else:
-			predicted_digit, confidence = predict_digit(digit)
+		predicted_digit, confidence = predict_digit(digit)
 		print("Predicted:", predicted_digit, "with confidence", 100*confidence)
 		digits.append(predicted_digit)
 	time = str(digits[0]) + str(digits[1]) + ":" + str(digits[2]) + str(digits[3]) + ":" + str(digits[4]) + str(
