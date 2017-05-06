@@ -13,16 +13,16 @@ config = {
 firebase = pyrebase.initialize_app(config)
 db = firebase.database()
 
-# Add info to database given id of competitor and array of 5 strings representing
-# the times it took to complete each round
-def addInfoToDatabase(id, times): 
+# Used to compute the average number of seconds to complete each round
+def computeAvgSeconds(comp_id, times):
 	all_times = []
 	for r, time in enumerate(times):
 		# add each round's time to database
 		round = r + 1
-		db.child("EventName").child("Competitors").child(id).child(round).set(time)
+		db.child("EventName").child("Competitors").child(comp_id).child(round).set(time)
 
 		# get time in total seconds
+		time = time.replace(".", ":")
 		divided = time.split(":")
 		minutes = divided[0]
 		seconds = divided[1]
@@ -39,9 +39,12 @@ def addInfoToDatabase(id, times):
 
 	# compute average of remaining times
 	average_time = sum(all_times)/3
-	#print(average_time)
 
-	# convert average time back to string format
+	return average_time
+
+
+# Used to convert average time back to string format
+def convertTimeFormat(average_time):
 	int_time = int(average_time)
 
 	miliseconds = "%.3f" % (average_time - int_time)
@@ -58,13 +61,30 @@ def addInfoToDatabase(id, times):
 	if len(seconds) == 1:
 		seconds = "0" + seconds
 
-
 	avg_string = minutes + ":" + seconds + "." + str(miliseconds[2:])
-	#print(avg_string)
+
+	return avg_string
+
+
+# Add info to database given id of competitor and array of 5 strings representing
+# the times it took to complete each round
+def addInfoToDatabase(comp_id, times, flagged): 
+
+	seconds = computeAvgSeconds(comp_id, times)
+	print(seconds)
+
+	avg_time = convertTimeFormat(seconds)
+	print(avg_time)
 
 	# add the new string and average seconds to database
-	db.child("EventName").child("Competitors").child(id).child("seconds").set(average_time)
-	db.child("EventName").child("Competitors").child(id).child("avg").set(avg_string)
+	db.child("EventName").child("Competitors").child(comp_id).child("seconds").set(seconds)
+	db.child("EventName").child("Competitors").child(comp_id).child("avg").set(avg_time)
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(1).set(flagged[0])
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(2).set(flagged[1])
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(3).set(flagged[2])
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(4).set(flagged[3])
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(5).set(flagged[4])
+
 
 # Return Dictionary of competitors organized in order of average completion time
 def getWinners():
@@ -72,14 +92,29 @@ def getWinners():
 	winners_dict = {}
 	competitors = db.child("EventName").child("Competitors").get()
     
-    # add competitor id/times to dictionary
+    # add competitor id/times to dictionary and check if times are correct
 	for c in competitors.each():
 		if type(c.val()) is dict:
-			id = str(c.key())
+			comp_id = str(c.key())
 			seconds = c.val()['seconds']
-			#print(c.val()['seconds'])
-			#print(c.key())
-			winners_dict[id] = seconds
+			round_1 = c.val()['1']
+			round_2 = c.val()['2']
+			round_3 = c.val()['3']
+			round_4 = c.val()['4']
+			round_5 = c.val()['5']
+			times = [round_1, round_2, round_3, round_4, round_5]
+			new_seconds = computeAvgSeconds(comp_id, times)
+			# check to see if round data has been changed
+			if (new_seconds == seconds):
+				winners_dict[comp_id] = seconds
+			else:
+				# if data changed, update average times in database
+				print("in else for id" + comp_id)
+				winners_dict[comp_id] = new_seconds
+				new_average = convertTimeFormat(new_seconds)
+				db.child("EventName").child("Competitors").child(comp_id).child("seconds").set(new_seconds)
+				db.child("EventName").child("Competitors").child(comp_id).child("avg").set(new_average)
+
     
     # sort dictionary by average seconds
 	ordered_winners = sorted(winners_dict.items(), key=lambda x: x[1])
@@ -96,5 +131,7 @@ def getWinners():
 	return ordered_winners
 
 times = ["01:02:000", "01:06:000", "01:03:000", "01:55:000", "01:02:000"]
-addInfoToDatabase("734", times)
+flagged = ["", "0,2", "", "3", ""]
+
+addInfoToDatabase("734", times, flagged)
 getWinners()
