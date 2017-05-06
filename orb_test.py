@@ -2,35 +2,35 @@ import numpy as np
 import cv2
 from matplotlib import pyplot as plt
 
-img_1 = cv2.imread('test_images\\final_template_test.jpg', 0)
-img_2 = cv2.imread('test_images\\template_new.png', 0)
+image = cv2.imread('test_images\\final_template_test.jpg', 0)
+template = cv2.imread('test_images\\template_new.png', 0)
 
 # Initiate STAR detector
 orb = cv2.ORB_create()
 
 # find the keypoints with ORB
-kp_1 = orb.detect(img_1, None)
-kp_2 = orb.detect(img_2, None)
+kp_image = orb.detect(image, None)
+kp_template = orb.detect(template, None)
 
 # compute the descriptors with ORB
-kp_1, des_1 = orb.compute(img_1, kp_1)
-kp_2, des_2 = orb.compute(img_2, kp_2)
+kp_image, des_image = orb.compute(image, kp_image)
+kp_template, des_template = orb.compute(template, kp_template)
 
 # draw only keypoints location,not size and orientation
-img_1_keypoints = cv2.drawKeypoints(img_1, kp_1, None, color=(0, 255, 0), flags=0)
-plt.imshow(img_1_keypoints), plt.show()
+image_keypoints = cv2.drawKeypoints(image, kp_image, None, color=(0, 255, 0), flags=0)
+plt.imshow(image_keypoints), plt.show()
 
 # create BFMatcher object
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 # Match descriptors.
-matches = bf.match(des_1, des_2)
+matches = bf.match(des_image, des_template)
 
 # Sort them in the order of their distance.
 matches = sorted(matches, key=lambda x: x.distance)
 
 # Draw first 10 matches.
-img_matches = cv2.drawMatches(img_1, kp_1, img_2, kp_2, matches[:10], None, flags=2)
+img_matches = cv2.drawMatches(image, kp_image, template, kp_template, matches[:10], None, flags=2)
 
 plt.imshow(img_matches), plt.show()
 
@@ -49,7 +49,7 @@ plt.imshow(img_matches), plt.show()
 #
 # flann = cv2.FlannBasedMatcher(index_params, search_params)
 #
-# matches = flann.knnMatch(des_1, des_2, k=2)
+# matches = flann.knnMatch(des_image, des_template, k=2)
 
 ######## Brute Force Matcher
 
@@ -57,7 +57,7 @@ plt.imshow(img_matches), plt.show()
 bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 # Match descriptors.
-matches = bf.match(des_1, des_2)
+matches = bf.match(des_image, des_template)
 
 # # Sort them in the order of their distance.
 matches = sorted(matches, key=lambda x: x.distance)
@@ -76,28 +76,28 @@ print("# Matches: ", len(good))
 
 if len(good) > 0:
 	# Get a list of matching points in the scene image
-	src_pts = np.float32([kp_1[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
+	src_pts = np.float32([kp_image[m.queryIdx].pt for m in good]).reshape(-1, 1, 2)
 	# Get a list of matching points in the template image
-	dst_pts = np.float32([kp_2[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
+	dst_pts = np.float32([kp_template[m.trainIdx].pt for m in good]).reshape(-1, 1, 2)
 	# Find a homography which maps scene points to the template points
-	M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 1.1)
+	M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC, 10)
 	matchesMask = mask.ravel().tolist()
 	print(M)
 	# Get the corners of the scene image
-	h, w = img_1.shape
+	h, w = image.shape
 	pts = np.float32([[0, 0], [0, h - 1], [w - 1, h - 1], [w - 1, 0]]).reshape(-1, 1, 2)
 	print(pts)
 	# Use the homography to warp the corners of the scene image to the template image
 	dst = cv2.perspectiveTransform(pts, M)
 	print(dst)
 	# Draw the warped scene corners to the template image in the scene image
-	img2 = cv2.polylines(img_2, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
+	img2 = cv2.polylines(template, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
 	cv2.imshow("image", img2)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
 	# Warp the scene image to the size of the template image
 	h_2, w_2 = img2.shape
-	adjusted_image = cv2.warpPerspective(img_1, M, (w_2, h_2))
+	adjusted_image = cv2.warpPerspective(image, M, (w_2, h_2))
 	cv2.imshow("image", adjusted_image)
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
