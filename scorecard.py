@@ -177,27 +177,38 @@ def get_row_of_digits_from_scorecard(image, row_num):
 
 def construct_id(digit_images):
 	digits = []
+	digit_flags = []
+	i = 0
 	for digit in digit_images:
 		predicted_digit, confidence = predict_digit(digit)
 		print("Predicted:", predicted_digit, "with confidence", 100*confidence)
 		digits.append(predicted_digit)
+		if confidence < 0.5:
+			digit_flags.append(str(i))
+		i += 1
 	comp_ip = str(digits[0]) + str(digits[1]) + str(digits[2])
-	return comp_ip
+	return comp_ip, digit_flags
 
 
 def construct_time(digit_images):
 	digits = []
+	digit_flags = []
+	i = 0
 	for digit in digit_images:
 		if digit is None:
-			predicted_digit = -1
-			confidence = 1.
+			predicted_digit = 0
+			confidence = 0.
 		else:
 			predicted_digit, confidence = predict_digit(digit)
+		predicted_digit, confidence = predict_digit(digit)
 		print("Predicted:", predicted_digit, "with confidence", 100*confidence)
 		digits.append(predicted_digit)
+		if confidence < 0.5:
+			digit_flags.append(str(i))
+		i += 1
 	time = str(digits[0]) + str(digits[1]) + ":" + str(digits[2]) + str(digits[3]) + ":" + str(digits[4]) + str(
-		digits[5]) + str(digits[6])
-	return time
+			digits[5]) + str(digits[6])
+	return time, digit_flags
 
 all_times = []
 image = cv2.imread('test_images\\samanthas_shadow.jpg', 0)
@@ -206,15 +217,19 @@ adjusted_image = get_scorecard_sift(image, template)
 if adjusted_image is None:
 	print("Could not extract image")
 else:
+	all_flags = []
 	id_digits = get_id_from_scorecard(adjusted_image)
-	comp_ip = construct_id(id_digits)
+	comp_ip, flags = construct_id(id_digits)
+	all_flags.append(flags)
 	print("Competitor id:", comp_ip)
 	for row in range(1, 6):
 		row_of_digits = get_row_of_digits_from_scorecard(adjusted_image, row)
-		constructed_time = construct_time(row_of_digits)
+		constructed_time, flags = construct_time(row_of_digits)
+		all_flags.append(flags)
 		all_times.append(constructed_time)
 		print(constructed_time)
-
-	addInfoToDatabase(comp_ip, all_times)
+	for flag in all_flags:
+		print(flag)
+	addInfoToDatabase(comp_ip, all_times, all_flags)
 	getWinners()
 
