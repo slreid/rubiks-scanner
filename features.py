@@ -8,7 +8,7 @@ from skimage import img_as_ubyte
 
 MIN_MATCH_COUNT = 10
 
-img1 = cv2.imread('test_images\\final_template_test.jpg', 0)  # queryImage
+img1 = cv2.imread('test_images\\skew_shadow_new.jpg', 0)  # queryImage
 img2 = cv2.imread('test_images\\template_new.png', 0)  # trainImage
 
 img1 = cv2.resize(img1, (int(img1.shape[1]), int(img1.shape[0])))
@@ -31,7 +31,7 @@ matches = flann.knnMatch(des1, des2, k=2)
 # store all the good matches as per Lowe's ratio test.
 good = []
 for m, n in matches:
-	if m.distance < 0.5 * n.distance:
+	if m.distance < 0.7 * n.distance:
 		good.append(m)
 
 print("# Matches: ", len(good))
