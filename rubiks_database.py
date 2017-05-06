@@ -76,14 +76,41 @@ def addInfoToDatabase(comp_id, times, flagged):
 	avg_time = convertTimeFormat(seconds)
 	print(avg_time)
 
-	# add the new string and average seconds to database
+	# create strings to add to database for flagged solve times
+
+	flagged_id = ""
+	for f in flagged[0]:
+		flagged_id += f + ","
+
+	flagged_1 = ""
+	for f in flagged[1]:
+		flagged_1 += f + ","
+
+	flagged_2 = ""
+	for f in flagged[2]:
+		flagged_2 += f + ","
+
+	flagged_3 = ""
+	for f in flagged[3]:
+		flagged_3 += f + ","
+
+	flagged_4 = ""
+	for f in flagged[4]:
+		flagged_4 += f + ","
+
+	flagged_5 = ""
+	for f in flagged[5]:
+		flagged_5 += f + ","
+
+	# add the average time and average seconds to database
 	db.child("EventName").child("Competitors").child(comp_id).child("seconds").set(seconds)
 	db.child("EventName").child("Competitors").child(comp_id).child("avg").set(avg_time)
-	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(1).set(flagged[0])
-	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(2).set(flagged[1])
-	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(3).set(flagged[2])
-	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(4).set(flagged[3])
-	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(5).set(flagged[4])
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child("ID").set(flagged_id)
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(2).set(flagged_1)
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(2).set(flagged_2)
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(3).set(flagged_3)
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(4).set(flagged_4)
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(5).set(flagged_5)
 
 
 # Return Dictionary of competitors organized in order of average completion time
@@ -130,8 +157,8 @@ def getWinners():
 
 	return ordered_winners
 
-times = ["01:02:000", "01:06:000", "01:03:000", "01:55:000", "01:02:000"]
-flagged = ["", "0,2", "", "3", ""]
+#times = ["01:02:000", "01:06:000", "01:03:000", "01:55:000", "01:02:000"]
+#flagged = [[], [], ["0", "2"], [], [], ["1"]]
 
-addInfoToDatabase("734", times, flagged)
-getWinners()
+#addInfoToDatabase("734", times, flagged)
+#getWinners()
