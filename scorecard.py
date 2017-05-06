@@ -63,6 +63,21 @@ def get_scorecard_sift(image, template):
 		return None
 
 
+def predict_digits(digit_images):
+	img_row = 28
+	img_cols = 28
+	for i in range(len(digit_images)):
+		if K.image_data_format() == 'channels_first':
+			digit_images[i] = digit_images[i].reshape(1, img_rows, img_cols)
+		else:
+			digit_images[i] = digit_images[i].reshape(img_rows, img_cols, 1)
+	model = load_model('CNN\\new_model.h5')
+	prediction = model.predict(np.asarray(digit_images))[0]
+	which_digit = np.argmax(prediction)
+	confidence = np.max(prediction)
+	return which_digit, confidence
+
+
 def predict_digit(image):
 	# input image dimensions
 	img_rows, img_cols = 28, 28
@@ -72,7 +87,7 @@ def predict_digit(image):
 	else:
 		image = image.reshape(img_rows, img_cols, 1)
 
-	model = load_model('CNN\\samantha.h5')
+	model = load_model('CNN\\new_model.h5')
 
 	prediction = model.predict(np.asarray([image]))[0]
 	which_digit = np.argmax(prediction)
@@ -166,13 +181,13 @@ def get_row_of_digits_from_scorecard(image, row_num):
 						img_as_ubyte(digit_28_28))
 			digits.append(img_as_ubyte(digit_28_28))
 		if not added:
-			digits.append(None)
+			digits.append(np.zeros((28, 28)))
 
 
 	# cv2.imshow("digit", digit)
 		# cv2.waitKey(0)
 		# cv2.destroyAllWindows()
-	return digits
+	return digits, flags
 
 
 def construct_id(digit_images):
@@ -194,14 +209,15 @@ def construct_time(digit_images):
 	digits = []
 	digit_flags = []
 	i = 0
+	digits_adjusted = []
+
 	for digit in digit_images:
 		if digit is None:
 			predicted_digit = 0
 			confidence = 0.
 		else:
 			predicted_digit, confidence = predict_digit(digit)
-		predicted_digit, confidence = predict_digit(digit)
-		print("Predicted:", predicted_digit, "with confidence", 100*confidence)
+			print("Predicted:", predicted_digit, "with confidence", 100*confidence)
 		digits.append(predicted_digit)
 		if confidence < 0.5:
 			digit_flags.append(str(i))
@@ -222,12 +238,16 @@ else:
 	comp_ip, flags = construct_id(id_digits)
 	all_flags.append(flags)
 	print("Competitor id:", comp_ip)
+	digit_images = []
 	for row in range(1, 6):
-		row_of_digits = get_row_of_digits_from_scorecard(adjusted_image, row)
-		constructed_time, flags = construct_time(row_of_digits)
-		all_flags.append(flags)
-		all_times.append(constructed_time)
-		print(constructed_time)
+		row_of_digits, flags = get_row_of_digits_from_scorecard(adjusted_image, row)
+		for digit in row_of_digits:
+			digit_images.append(digit)
+
+	constructed_time, flags = construct_time(digit_images)
+	all_flags.append(flags)
+	all_times.append(constructed_time)
+	print(constructed_time)
 	for flag in all_flags:
 		print(flag)
 	addInfoToDatabase(comp_ip, all_times, all_flags)
