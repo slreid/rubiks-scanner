@@ -157,8 +157,8 @@ def getWinners():
 
 	return ordered_winners
 
-#times = ["01:02:000", "01:06:000", "01:03:000", "01:55:000", "01:02:000"]
-#flagged = [[], [], ["0", "2"], [], [], ["1"]]
+#times = ["01:23:456", "02:04:818", "05:04:321", "03:14:888", "01:52:582"]
+#flagged = [[], [], ["6"], [], [], ["1"]]
 
-#addInfoToDatabase("734", times, flagged)
+#addInfoToDatabase("880", times, flagged)
 #getWinners()
