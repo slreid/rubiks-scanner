@@ -1,4 +1,4 @@
-# rubiks-scanner
+# Rubiks-Scanner
 
 A prototype computer vision application to replace human data entry at Rubik's Cube competitions.
 
