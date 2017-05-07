@@ -106,7 +106,7 @@ def addInfoToDatabase(comp_id, times, flagged):
 	db.child("EventName").child("Competitors").child(comp_id).child("seconds").set(seconds)
 	db.child("EventName").child("Competitors").child(comp_id).child("avg").set(avg_time)
 	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child("ID").set(flagged_id)
-	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(2).set(flagged_1)
+	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(1).set(flagged_1)
 	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(2).set(flagged_2)
 	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(3).set(flagged_3)
 	db.child("EventName").child("Competitors").child(comp_id).child("Flagged").child(4).set(flagged_4)
