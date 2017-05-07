@@ -32,7 +32,7 @@ def get_scorecard_sift(image, template):
 	# store all the good matches as per Lowe's ratio test.
 	good = []
 	for m, n in matches:
-		if m.distance < 0.6 * n.distance:
+		if m.distance < 0.5 * n.distance:
 			good.append(m)
 
 	print("# Matches: ", len(good))
@@ -207,49 +207,6 @@ def construct_times(digits):
 	return times
 
 
-def found_contour_of_template(image):
-	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-	gray = cv2.GaussianBlur(gray, (5, 5), 0)
-	edged = cv2.Canny(gray, 20, 150)  # 75, 200
-	# find the contours in the edged image, keeping only the
-	# largest ones, and initialize the screen contour
-	(_, cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-	cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
-
-	edged = cv2.cvtColor(np.float32(edged), cv2.COLOR_GRAY2BGR)
-
-	rectangle = []
-	# loop over the contours
-	for c in cnts:
-		# approximate the contour
-		peri = cv2.arcLength(c, True)
-		approx = cv2.approxPolyDP(c, 0.03 * peri, True)  # 0.02
-		# if our approximated contour has four points, then we
-		# can assume that we have found our screen
-		if len(approx) == 4:
-			rectangle = approx
-			break
-	if len(rectangle) > 0:
-		point_1 = rectangle[0][0]
-		point_2 = rectangle[1][0]
-		point_3 = rectangle[2][0]
-
-		dist_1_2 = np.sqrt((point_2[0] - point_1[0])**2 + (point_2[1] - point_1[1])**2)
-		dist_2_3 = np.sqrt((point_3[0] - point_2[0])**2 + (point_3[1] - point_2[1])**2)
-
-		ratio = 0
-		if dist_1_2 > dist_2_3:
-			ratio = dist_1_2 / dist_2_3
-			print("Found ratio of", ratio)
-		else:
-			ratio = dist_2_3 / dist_1_2
-			print("Found ratio of", ratio)
-		if 1.1 <= ratio <= 1.6:
-			cv2.drawContours(image, [rectangle], -1, (0, 255, 0), 2)
-			return True
-		return False
-	return False
-
 def start_video_stream(host):
 	if len(sys.argv) > 1:
 		host = sys.argv[1]
@@ -271,40 +228,35 @@ def start_video_stream(host):
 			bytes_from_stream = bytes_from_stream[b + 2:]
 			frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
 			cv2.imshow(host, frame)
-			if i % 5 == 0:
-				found = found_contour_of_template(frame)
-				cv2.imshow(host, frame)
-				if found:
-					adjusted_image = get_scorecard_sift(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), template)
-					if adjusted_image is not None:
-						cv2.imshow("image", adjusted_image)
-						cv2.waitKey(0)
-						cv2.destroyAllWindows()
-						all_digits, digit_flags = get_digits_from_scorecard(adjusted_image)
-						predictions, prediction_flags = predict_digits(all_digits, digit_flags)
-						comp_id = construct_id(predictions[0:3])
-						times = construct_times(predictions[3:])
-						print("Comp ID:", comp_id)
-						for time in times:
-							print(time)
-						print(prediction_flags)
-						prediction_flags_formatted = []
-						# Handle ID
-						for i in range(0, 2):
-							prediction_flags_formatted.append([])
-							if prediction_flags[i] == 1:
-								prediction_flags_formatted[0].append(str(i))
-						# Handle the 5 rounds
-						for rounds in range(0, 4):
-							prediction_flags_formatted.append([])
-							for i in range(0, 6):
-								if prediction_flags[3 + i + 7*rounds] == 1:
-									prediction_flags_formatted[rounds + 1].append(str(i))
-						print(prediction_flags_formatted)
-						addInfoToDatabase(comp_id, times, prediction_flags_formatted)
-						getWinners()
-				stream = urllib.request.urlopen(hoststr)
-				bytes_from_stream = bytes()
+			if i % 30 == 0:
+				adjusted_image = get_scorecard_sift(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), template)
+				if adjusted_image is not None:
+					cv2.imshow("image", adjusted_image)
+					cv2.waitKey(0)
+					cv2.destroyAllWindows()
+					all_digits, digit_flags = get_digits_from_scorecard(adjusted_image)
+					predictions, prediction_flags = predict_digits(all_digits, digit_flags)
+					comp_id = construct_id(predictions[0:3])
+					times = construct_times(predictions[3:])
+					print("Comp ID:", comp_id)
+					for time in times:
+						print(time)
+					print(prediction_flags)
+					prediction_flags_formatted = []
+					# Handle ID
+					for i in range(0, 2):
+						prediction_flags_formatted.append([])
+						if prediction_flags[i] == 1:
+							prediction_flags_formatted[0].append(str(i))
+					# Handle the 5 rounds
+					for rounds in range(0, 4):
+						prediction_flags_formatted.append([])
+						for i in range(0, 6):
+							if prediction_flags[3 + i + 7*rounds] == 1:
+								prediction_flags_formatted[rounds + 1].append(str(i))
+					print(prediction_flags_formatted)
+					addInfoToDatabase(comp_id, times, prediction_flags_formatted)
+					getWinners()
 
 			# Press escape to close
 			if cv2.waitKey(1) == 27:
