@@ -142,7 +142,6 @@ def getWinners():
 				db.child("EventName").child("Competitors").child(comp_id).child("seconds").set(new_seconds)
 				db.child("EventName").child("Competitors").child(comp_id).child("avg").set(new_average)
 
-
 	# sort dictionary by average seconds
 	ordered_winners = sorted(winners_dict.items(), key=lambda x: x[1])
 

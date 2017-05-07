@@ -7,6 +7,7 @@ from keras.models import load_model
 from skimage import img_as_ubyte
 
 
+# Match an input image to a template image using SIFT and return the input image warped to the template image coordinates
 def get_scorecard_sift(image, template):
 
 	MIN_MATCH_COUNT = 10
@@ -59,6 +60,7 @@ def get_scorecard_sift(image, template):
 		return None
 
 
+# Predict an array of images of digits
 def predict_digits(digit_images, digit_flags):
 	img_rows = 28
 	img_cols = 28
@@ -70,14 +72,13 @@ def predict_digits(digit_images, digit_flags):
 	model = load_model('CNN\\new_model.h5')
 	print("# Digits:", len(digit_images))
 	predictions = model.predict(np.asarray(digit_images))
-	# print(predictions)
 	predicted_digits = []
 	flags = []
 	i = 0
 	for prediction in predictions:
 		which_digit = np.argmax(prediction)
 		confidence = np.max(prediction)
-		print("Predicted", which_digit, "with confidence", confidence)
+		# print("Predicted", which_digit, "with confidence", confidence)
 		predicted_digits.append(which_digit)
 		if confidence < 0.75 or digit_flags[i] == 1:
 			flags.append(1)
@@ -88,6 +89,7 @@ def predict_digits(digit_images, digit_flags):
 	return predicted_digits, flags
 
 
+# Extracts the ID from the scorecard
 def get_id_from_scorecard(image):
 	bw = image < skimage.filters.threshold_local(image, 101)
 	bw = bw.astype("float32")
@@ -105,16 +107,19 @@ def get_id_from_scorecard(image):
 	return digits
 
 
+# Extract a digit from a candidate digit image by finding a contour that looks like a digit and finding its bounding
+# box
 def extract_digit(digit):
 	cnts = cv2.findContours(img_as_ubyte(digit.copy()), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 	cnts = cnts[1]
 	cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:2]
-	# loop over the digit area candidates
 	added = False
+	# Loop over all of the contour candidates
 	for c in cnts:
-		# compute the bounding box of the contour
+		# Compute the bounding box of each contour
 		(x, y, w, h) = cv2.boundingRect(c)
-		# if the contour is sufficiently large, it must be a digit
+		# If the contour is sufficiently large, it should be a digit
+		# A small lower bound on the width is due to the fact that 1s are small
 		if not ((40 >= h >= 12) and (40 >= w >= 3)):
 			continue
 		added = True
@@ -122,27 +127,25 @@ def extract_digit(digit):
 		resize_ratio = min(20. / w, 20. / h)
 		resize_width = int(resize_ratio * w)
 		resize_height = int(resize_ratio * h)
+		# Resize the digit image to 20x20 according to its aspect ratio
 		digit_resized = skimage.transform.resize(digit_crop, (resize_height, resize_width), mode='constant')
 		digit_28_28 = np.zeros((28, 28), dtype=float)
 		lower_bound_y = int((28 - resize_height) / 2)
 		upper_bound_y = int(resize_height + (28 - resize_height) / 2)
 		lower_bound_x = int((28 - resize_width) / 2)
 		upper_bound_x = int(resize_width + (28 - resize_width) / 2)
+		# Pad the 20x20 with 0s to make a 28x28 digit image with the digit centered in the image
 		digit_28_28[lower_bound_y:upper_bound_y, lower_bound_x:upper_bound_x] = digit_resized
 		return digit_28_28, 0
 	if not added:
-		# If a digit was not found, add on a blank image and a flag to show it isn't a digit
+		# If a digit was not found, add on a blank image and a flag to indicate it isn't a digit
 		return np.zeros((28, 28)), 1
 
 
+# Extract each of the 35 digits from the scorecard using hardcoded coordinates from the template image we made
 def get_digits_from_scorecard(image):
 	bw = image < skimage.filters.threshold_local(image, 101)
-	# plt.imshow(bw), plt.show()
-	cv2.imwrite('presentation_images\\bw_digits.png', img_as_ubyte(bw))
 
-	# cv2.imshow("Black and White", bw)
-	# cv2.waitKey(0)
-	# cv2.destroyAllWindows()
 	digits = []
 	flags = []
 
@@ -174,10 +177,12 @@ def get_digits_from_scorecard(image):
 	return digits, flags
 
 
+# Construct the ID from a list of three digits
 def construct_id(digits):
 	return str(digits[0]) + str(digits[1]) + str(digits[2])
 
 
+# Construct each of the round times from a list of digits
 def construct_times(digits):
 	times = []
 	for i in range(0, 5):
@@ -187,16 +192,15 @@ def construct_times(digits):
 	return times
 
 
+# Find rectangles in the input image. If their aspect ratio is within a certain range, return true and draw the image
+# on the input image. This is meant to give the use an idea of whether the scorecard is being picked up in the image.
 def found_contour_of_template(image):
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 	gray = cv2.GaussianBlur(gray, (5, 5), 0)
 	edged = cv2.Canny(gray, 20, 150)  # 75, 200
-	# find the contours in the edged image, keeping only the
-	# largest ones, and initialize the screen contour
+	# Find the contours in the edged image, keeping only the largest ones
 	(_, cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 	cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:5]
-
-	edged = cv2.cvtColor(np.float32(edged), cv2.COLOR_GRAY2BGR)
 
 	rectangle = []
 	# loop over the contours
