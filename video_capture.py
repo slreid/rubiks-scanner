@@ -58,12 +58,12 @@ def get_scorecard_sift(image, template):
 
 cap = cv2.VideoCapture(0)
 template = cv2.imread('test_images\\template_new.png', 0)
-while (True):
+while True:
 	# Capture frame-by-frame
 	ret, frame = cap.read()
 
 	# Our operations on the frame come here
-	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	detected_scorecard = get_scorecard_sift(gray, template)
 	if detected_scorecard is None:
 		print("No scorecard found.")
