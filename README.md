@@ -13,9 +13,9 @@ Software Requirements:
 - Keras 2.0.2
 
 Run one of either of the following in order to test our project.
+- `rubiks_scanner_phone_video.py`
 - `rubiks_scanner_static_image.py`
 - `rubiks_scanner_webcam_video.py`
-- `rubiks_scanner_phone_video.py`
 
 The *static_image* version uses a saved image of a scorecard and matches it to a template. The *webcam_video* version uses the output of the current computer's default webcam as a video capture device. The *phone_video* version connects to an IP camera at a specified IP address, hardcoded into that file.
 
