@@ -2,7 +2,7 @@
 
 A prototype computer vision application to replace human data entry at Rubik's Cube competitions created by Bridget Andersen, Samantha Reid, and Steven Stetzler.
 
-For an indepth description of our project, read out write-up in rubiks_scanner_info.pdf
+For an in-depth description of our project, read our write-up contained in rubiks_scanner_info.pdf
 
 Software Requirements:
 - Python 3.5.3
@@ -10,7 +10,7 @@ Software Requirements:
 - Tensorflow 1.0.0
 - Keras 2.0.2
 
-Run one of either in order to test our project.
+Run one of either of the following in order to test our project.
 - rubiks_scanner_static_image.py
 - rubiks_scanner_webcam_video.py
 - rubiks_scanner_phone_video.py
