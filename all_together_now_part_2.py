@@ -1,9 +1,8 @@
-import numpy as np
-import cv2
-from matplotlib import pyplot as plt
 import skimage.transform
 import skimage.filters
+import urllib.request
 import numpy as np
+import sys
 import cv2
 from keras import backend as K
 from keras.models import load_model
@@ -50,7 +49,7 @@ def get_scorecard_sift(image, template):
 		dst = cv2.perspectiveTransform(pts, M)
 		img2 = cv2.polylines(template, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
 
-		h_2, w_2 = img2.shape
+		h_2, w_2, _ = img2.shape
 		adjusted_image = cv2.warpPerspective(image, M, (w_2, h_2))
 		# cv2.imshow("Warped", adjusted_image)
 		# cv2.waitKey(0)
@@ -182,97 +181,17 @@ def get_digits_from_scorecard(image):
 			max_y = 273 + 49 * row
 			min_x = 43 + 54 * column
 			max_x = 90 + 54 * column
-			cv2.imshow("bw", np.float32(bw[min_y:max_y, min_x:max_x]))
-			cv2.waitKey(0)
-			cv2.destroyAllWindows()
+			# cv2.imshow("bw", np.float32(bw[min_y:max_y, min_x:max_x]))
+			# cv2.waitKey(0)
+			# cv2.destroyAllWindows()
 			digit, flag = extract_digit(bw[min_y:max_y, min_x:max_x])
-			cv2.imshow("digit", np.float32(digit))
-			cv2.waitKey(0)
-			cv2.destroyAllWindows()
+			# cv2.imshow("digit", np.float32(digit))
+			# cv2.waitKey(0)
+			# cv2.destroyAllWindows()
 			digits.append(digit)
 			flags.append(flag)
-			# plt.imshow(digit_not_bw), plt.show()
-			# plt.imshow(digit), plt.show()
 
 	return digits, flags
-
-
-# def get_row_of_digits_from_scorecard(image, row_num):
-# 	adjusted_row_num = row_num - 1
-# 	# print("shape", image.shape)
-# 	bw = image < skimage.filters.threshold_local(image, 101)
-# 	# plt.imshow(bw), plt.show()
-# 	cv2.imwrite('presentation_images\\bw_digits.png', img_as_ubyte(bw))
-#
-# 	# cv2.imshow("Black and White", bw)
-# 	# cv2.waitKey(0)
-# 	# cv2.destroyAllWindows()
-# 	digits = []
-# 	for column in range(0, 7):
-# 		min_y = 233 + 49 * adjusted_row_num
-# 		max_y = 273 + 49 * adjusted_row_num
-# 		min_x = 43 + 54 * column
-# 		max_x = 90 + 54 * column
-# 		digit_not_bw = image[min_y:max_y, min_x:max_x]
-# 		digit = bw[min_y:max_y, min_x:max_x]
-# 		# plt.imshow(digit_not_bw), plt.show()
-# 		# plt.imshow(digit), plt.show()
-#
-# 		cnts = cv2.findContours(img_as_ubyte(digit.copy()), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-# 		cnts = cnts[1]
-# 		digitCnts = []
-# 		digit_draw = digit_not_bw.copy()
-# 		# print("Found", cnts, "number of contours")
-# 		cnts = sorted(cnts, key=cv2.contourArea, reverse=True)[:2]
-# 		# loop over the digit area candidates
-# 		added = False
-# 		for c in cnts:
-# 			# compute the bounding box of the contour
-# 			(x, y, w, h) = cv2.boundingRect(c)
-# 			# if the contour is sufficiently large, it must be a digit
-# 			if not ((40 >= h >= 12) and (40 >= w >= 3)):
-# 				continue
-# 			else:
-# 				added = True
-# 			digitCnts.append(c)
-# 			cv2.rectangle(digit_draw, (x, y), (x + w, y + h), (0, 255, 0), thickness=2)
-# 			# cv2.imshow("Show", digit_draw)
-# 			# cv2.waitKey()
-# 			# cv2.destroyAllWindows()
-# 			digit_crop = digit[y:y+h, x:x+w]
-# 			# plt.imshow(digit), plt.show()
-# 			# plt.imshow(digit_crop), plt.show()
-# 			resize_ratio = min(20./w, 20./h)
-# 			resize_width = int(resize_ratio * w)
-# 			resize_height = int(resize_ratio * h)
-# 			digit_resized = skimage.transform.resize(digit_crop, (resize_height, resize_width), mode='constant')
-# 			# plt.imshow(digit), plt.show()
-# 			# plt.imshow(digit_resized), plt.show()
-# 			digit_28_28 = np.zeros((28, 28), dtype=float)
-# 			lower_bound_y = int((28 - resize_height)/2)
-# 			upper_bound_y = int(resize_height + (28 - resize_height)/2)
-# 			lower_bound_x = int((28 - resize_width)/2)
-# 			upper_bound_x = int(resize_width + (28 - resize_width)/2)
-# 			digit_28_28[lower_bound_y:upper_bound_y, lower_bound_x:upper_bound_x] = digit_resized
-# 			# plt.imshow(digit, 'gray'), plt.show()
-# 			# plt.imshow(digit_28_28, 'gray'), plt.show()
-# 			cv2.imwrite('presentation_images\\digits\\' + str(row_num) + '_' + str(column + 1) + '.png',
-# 			            img_as_ubyte(digit_not_bw))
-# 			cv2.imwrite('presentation_images\\digits\\box_' + str(row_num) + '_' + str(column + 1) + '.png',
-# 						img_as_ubyte(digit_draw))
-# 			cv2.imwrite('presentation_images\\digits\\bw_' + str(row_num) + '_' + str(column + 1) + '.png',
-# 						img_as_ubyte(digit_crop))
-# 			cv2.imwrite('presentation_images\\digits\\bw_28_' + str(row_num) + '_' + str(column + 1) + '.png',
-# 						img_as_ubyte(digit_28_28))
-# 			digits.append(img_as_ubyte(digit_28_28))
-# 		if not added:
-# 			digits.append(np.zeros((28, 28)))
-#
-#
-# 	# cv2.imshow("digit", digit)
-# 		# cv2.waitKey(0)
-# 		# cv2.destroyAllWindows()
-# 	return digits, flags
 
 
 def construct_id(digits):
@@ -288,23 +207,60 @@ def construct_times(digits):
 	return times
 
 
-all_times = []
-all_flags = []
-image = cv2.imread('test_images\\final_template_test.jpg', 0)
-template = cv2.imread('test_images\\template_new.png', 0)
-adjusted_image = get_scorecard_sift(image, template)
-if adjusted_image is None:
-	print("Could not extract image")
-else:
-	all_digits, digit_flags = get_digits_from_scorecard(adjusted_image)
-	predictions, prediction_flags = predict_digits(all_digits, digit_flags)
-	comp_id = construct_id(predictions[0:3])
-	times = construct_times(predictions[3:])
-	# for time in times:
-	# 	print(time)
-	# for flag in prediction_flags:
-	# 	print(flag)
+def start_video_stream(host):
+	if len(sys.argv) > 1:
+		host = sys.argv[1]
 
-	addInfoToDatabase(comp_id, times, prediction_flags)
-	getWinners()
+	hoststr = 'http://' + host + '/video?x.mjpeg'
+	print('Streaming ' + hoststr)
 
+	stream = urllib.request.urlopen(hoststr)
+
+	template = cv2.imread('test_images\\template_new.png')
+	bytes_from_stream = bytes()
+	i = 0
+	while True:
+		bytes_from_stream += stream.read(1024)
+		a = bytes_from_stream.find(b'\xff\xd8')
+		b = bytes_from_stream.find(b'\xff\xd9')
+		if a != -1 and b != -1:
+			jpg = bytes_from_stream[a:b + 2]
+			bytes_from_stream = bytes_from_stream[b + 2:]
+			frame = cv2.imdecode(np.fromstring(jpg, dtype=np.uint8), cv2.IMREAD_COLOR)
+			cv2.imshow(host, frame)
+			if i % 30 == 0:
+				adjusted_image = get_scorecard_sift(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), template)
+				if adjusted_image is not None:
+					cv2.imshow("image", adjusted_image)
+					cv2.waitKey(0)
+					cv2.destroyAllWindows()
+					all_digits, digit_flags = get_digits_from_scorecard(adjusted_image)
+					predictions, prediction_flags = predict_digits(all_digits, digit_flags)
+					comp_id = construct_id(predictions[0:3])
+					times = construct_times(predictions[3:])
+					print("Comp ID:", comp_id)
+					for time in times:
+						print(time)
+					print(prediction_flags)
+					prediction_flags_formatted = []
+					# Handle ID
+					for i in range(0, 2):
+						prediction_flags_formatted.append([])
+						if prediction_flags[i] == 1:
+							prediction_flags_formatted[0].append(str(i))
+					# Handle the 5 rounds
+					for rounds in range(0, 4):
+						prediction_flags_formatted.append([])
+						for i in range(0, 6):
+							if prediction_flags[3 + i + 7*rounds] == 1:
+								prediction_flags_formatted[rounds + 1].append(str(i))
+					print(prediction_flags_formatted)
+					addInfoToDatabase(comp_id, times, prediction_flags_formatted)
+					getWinners()
+
+			# Press escape to close
+			if cv2.waitKey(1) == 27:
+				exit(0)
+		i += 1
+
+start_video_stream("192.168.137.94:8080")
