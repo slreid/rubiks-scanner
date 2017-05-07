@@ -20,8 +20,7 @@ Run one of either of the following in order to test our project.
 The *static_image* version uses a saved image of a scorecard and matches it to a template. The *webcam_video* version uses the output of the current computer's default webcam as a video capture device. The *phone_video* version connects to an IP camera at a specified IP address, hardcoded into that file.
 
 Note on Windows/OS X/Linux compatibility: Some file loctions are hardcoded using Windows path syntax in our files. Make changes at the following locations in order to allow the code to run on OS X/Linux
-- `rubiks_database.py`: line 6, 7,
-- `rubiks_scanner_core.py`: line 72, 
+- `rubiks_scanner_core.py`: line 72
 - `rubiks_scanner_phone_video.py`: line 15
 - `rubiks_scanner_static_image.py`: line 6, 7
 - `rubiks_scanner_webcam_video.py`: line 6
